@@ -87,9 +87,18 @@ for result in results:
 
 ## Test Results
 
+### Standalone Pipeline (Recommended)
 Tested on `genetics.PNG`:
 - **28 genetic sequences** (cls_id: 999)
 - **27 text elements** (cls_id: 22)
 - **Total: 55 elements**
-- No duplicates between text and genetic_sequence classes
-- All coordinates as floats: `[x1, y1, x2, y2]`
+- Uses mobile OCR models for optimal detection
+
+### PP-StructureV3 Integration
+When integrated with PP-StructureV3:
+- Detects layout elements (table, titles, etc.)
+- Adds genetic sequences to the same boxes array
+- **Note**: May detect fewer sequences (20-25) due to layout-based text grouping
+- Use standalone pipeline for maximum genetic sequence detection
+
+All coordinates as floats: `[x1, y1, x2, y2]`
