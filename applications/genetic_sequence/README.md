@@ -1,75 +1,95 @@
-# Genetic Sequence Detection
+# Genetic Sequence Detection Pipeline
 
-Hybrid OCR + rule-based validation for detecting DNA, RNA, and protein sequences in documents.
+Extends PaddleOCR with genetic sequence detection, returning PP-StructureV3-compatible JSON format.
 
 ## Features
 
 - **DNA Detection**: Sequences containing A, T, C, G
 - **RNA Detection**: Sequences containing A, U, C, G  
 - **Protein Detection**: Sequences with 20 standard amino acids
-- **Configurable minimum length** for sequence validation
-- **Returns bounding boxes** and confidence scores
-- **Visualization support**: Save images with detected sequences highlighted
+- **PP-StructureV3 Format**: Compatible JSON output with standard layout classes
+- **No Duplicates**: Genetic sequences are separate from text elements
+- **Visualization**: Color-coded bounding boxes for all element types
+
+## Output Format
+
+Returns PP-StructureV3-compatible JSON with all elements:
+
+```json
+{
+  "results": [{
+    "input_path": "document.png",
+    "page_index": 0,
+    "boxes": [
+      {
+        "cls_id": 22,
+        "label": "text",
+        "score": 0.998,
+        "coordinate": [100.0, 200.0, 300.0, 250.0],
+        "text": "Regular text content"
+      },
+      {
+        "cls_id": 999,
+        "label": "genetic_sequence",
+        "score": 0.999,
+        "coordinate": [100.0, 300.0, 500.0, 350.0],
+        "text": "ATCGATCGATCG",
+        "sequence_type": "DNA"
+      }
+    ]
+  }]
+}
+```
+
+## Class IDs
+
+Standard PP-StructureV3 classes:
+- `22` - text
+- `21` - table
+- `14` - image
+- `17` - paragraph_title
+- `6` - doc_title
+- `7` - figure_title
+
+**New class:**
+- `999` - **genetic_sequence** (with additional `sequence_type` field)
 
 ## Installation
 
-Requires PaddlePaddle-GPU 3.2.1 with CUDA 12.6:
-
 ```bash
 uv pip install paddlepaddle-gpu==3.2.1 --extra-index-url https://www.paddlepaddle.org.cn/packages/stable/cu126/
-uv pip install paddleocr
+uv pip install "paddleocr[doc-parser]"
 ```
 
 ## Usage
 
 ```python
-from applications.genetic_sequence import GeneticSequenceDetector
+from applications.genetic_sequence.pipeline import GeneticSequencePipeline
 
 # Initialize
-detector = GeneticSequenceDetector(min_length=10)
+pipeline = GeneticSequencePipeline(min_length=10, device="gpu")
 
-# Extract sequences
-sequences = detector.extract_sequences("document.png")
+# Run detection
+results = pipeline.predict("document.png")
 
-# Save visualization (genetic sequences only)
-detector.save_visualization("document.png", sequences, "output.jpg")
+# Save JSON (PP-StructureV3 format)
+pipeline.save_to_json(results, "output.json")
 
-# Process results
-for seq in sequences:
-    print(f"{seq['sequence_type']}: {seq['text']}")
-    print(f"Confidence: {seq['confidence']:.2f}")
-```
+# Save visualization
+pipeline.save_visualization("document.png", results, "output.jpg")
 
-## Output Format
-
-```python
-{
-    "type": "genetic_sequence",
-    "sequence_type": "DNA" | "RNA" | "PROTEIN",
-    "text": "ATCGATCG...",
-    "bbox": [[x1,y1], [x2,y2], [x3,y3], [x4,y4]],
-    "confidence": 0.95
-}
+# Access results
+for result in results:
+    for box in result['boxes']:
+        if box['label'] == 'genetic_sequence':
+            print(f"{box['sequence_type']}: {box['text']}")
 ```
 
 ## Test Results
 
 Tested on `genetics.PNG`:
-- **28 DNA sequences detected**
-- Average confidence: 0.99
-- Visualizations saved to `output/` directory
-
-## Visualization
-
-Two types of visualizations are generated:
-
-1. **All text** (`genetics_all_text.jpg`): Shows all OCR-detected text
-2. **Sequences only** (`genetics_sequences_only.jpg`): Highlights only genetic sequences with green boxes
-
-## Requirements
-
-- PaddlePaddle-GPU 3.2.1
-- PaddleOCR 3.4.0
-- Python 3.12
-- CUDA 12.6
-- Minimum sequence length: 10 (configurable)
+- **28 genetic sequences** (cls_id: 999)
+- **27 text elements** (cls_id: 22)
+- **Total: 55 elements**
+- No duplicates between text and genetic_sequence classes
+- All coordinates as floats: `[x1, y1, x2, y2]`
