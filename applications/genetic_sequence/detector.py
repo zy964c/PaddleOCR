@@ -14,7 +14,10 @@ class GeneticSequenceDetector:
         self.ocr = PaddleOCR(
             use_doc_orientation_classify=False,
             use_doc_unwarping=False,
-            use_textline_orientation=False
+            use_textline_orientation=False,
+            device="gpu",
+            text_detection_model_name="PP-OCRv5_mobile_det",
+            text_recognition_model_name="PP-OCRv5_mobile_rec"
         )
         self.min_length = min_length
     
@@ -24,21 +27,22 @@ class GeneticSequenceDetector:
         sequences = []
         
         for res in result:
-            text = res.get("rec_text", "")
-            bbox = res.get("dt_polys")
-            confidence = res.get("rec_score", 0.0)
+            rec_texts = res.get("rec_texts", [])
+            rec_scores = res.get("rec_scores", [])
+            dt_polys = res.get("dt_polys", [])
             
-            cleaned = self._clean_text(text)
-            seq_type = self._validate_sequence(cleaned)
-            
-            if seq_type:
-                sequences.append({
-                    "type": "genetic_sequence",
-                    "sequence_type": seq_type,
-                    "text": cleaned,
-                    "bbox": bbox,
-                    "confidence": confidence
-                })
+            for i, text in enumerate(rec_texts):
+                cleaned = self._clean_text(text)
+                seq_type = self._validate_sequence(cleaned)
+                
+                if seq_type:
+                    sequences.append({
+                        "type": "genetic_sequence",
+                        "sequence_type": seq_type,
+                        "text": cleaned,
+                        "bbox": dt_polys[i] if i < len(dt_polys) else None,
+                        "confidence": rec_scores[i] if i < len(rec_scores) else 0.0
+                    })
         
         return sequences
     
@@ -64,3 +68,30 @@ class GeneticSequenceDetector:
             return "PROTEIN"
         
         return None
+    
+    def save_visualization(self, image_path: str, sequences: List[Dict], save_path: str):
+        """Save visualization with only genetic sequences highlighted."""
+        from PIL import Image, ImageDraw, ImageFont
+        import numpy as np
+        
+        # Load image
+        image = Image.open(image_path).convert('RGB')
+        draw = ImageDraw.Draw(image)
+        
+        # Draw rectangles for each genetic sequence
+        for seq in sequences:
+            bbox = seq['bbox']
+            if bbox is not None:
+                # Convert bbox to list of tuples
+                points = [(int(p[0]), int(p[1])) for p in bbox]
+                
+                # Draw polygon
+                draw.polygon(points, outline='green', width=3)
+                
+                # Add label
+                label = f"{seq['sequence_type']} ({seq['confidence']:.2f})"
+                draw.text((points[0][0], points[0][1] - 20), label, fill='green')
+        
+        # Save
+        image.save(save_path)
+        print(f"Saved genetic sequence visualization to: {save_path}")
