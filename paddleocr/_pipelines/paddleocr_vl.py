@@ -98,6 +98,7 @@ class PaddleOCRVL(PaddleXPipelineWrapper):
         self,
         input,
         *,
+        layout_boxes=None,
         use_doc_orientation_classify=None,
         use_doc_unwarping=None,
         use_layout_detection=None,
@@ -125,6 +126,7 @@ class PaddleOCRVL(PaddleXPipelineWrapper):
     ):
         return self.paddlex_pipeline.predict(
             input,
+            layout_boxes=layout_boxes,
             use_doc_orientation_classify=use_doc_orientation_classify,
             use_doc_unwarping=use_doc_unwarping,
             use_layout_detection=use_layout_detection,
@@ -155,6 +157,7 @@ class PaddleOCRVL(PaddleXPipelineWrapper):
         self,
         input,
         *,
+        layout_boxes=None,
         use_doc_orientation_classify=None,
         use_doc_unwarping=None,
         use_layout_detection=None,
@@ -183,6 +186,7 @@ class PaddleOCRVL(PaddleXPipelineWrapper):
         return list(
             self.predict_iter(
                 input,
+                layout_boxes=layout_boxes,
                 use_doc_orientation_classify=use_doc_orientation_classify,
                 use_doc_unwarping=use_doc_unwarping,
                 use_layout_detection=use_layout_detection,
