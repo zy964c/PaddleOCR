@@ -30,19 +30,14 @@ def create_config_from_structure(structure, *, unset=None, config=None):
     return config
 
 
-def convert_layout_json_to_paddleocr(layout_data, page_index=0):
+def convert_layout_json_to_paddleocr(layout_data, page_index=0, target_width=None, target_height=None):
     """Convert layout.json format to PaddleOCR-VL layout boxes format with coordinate scaling.
     
     Args:
         layout_data: Dict with page indices as keys, each containing list of layout items
         page_index: Page index to convert (default: 0)
-    
-    Returns:
-        List of box dicts with cls_id, label, score, coordinate fields
-        
-    Note: Coordinates are scaled from source dimensions (stored in layout items) to 
-    target dimensions (1190x1684 for A4 at 144 DPI). For different page sizes, 
-    scaling is applied proportionally.
+        target_width: Target image width in pixels (default: 1190 for A4 portrait at 144 DPI)
+        target_height: Target image height in pixels (default: 1684 for A4 portrait at 144 DPI)
     """
     page_key = str(page_index)
     if page_key not in layout_data:
@@ -57,14 +52,12 @@ def convert_layout_json_to_paddleocr(layout_data, page_index=0):
             source_height = item["height"]
             break
     
-    # Default target dimensions (A4 at 144 DPI)
-    # These will be overridden if different page size is detected
-    target_width = 1190
-    target_height = 1684
+    tw = target_width or 1190
+    th = target_height or 1684
     
     # Calculate scaling factors
-    scale_x = target_width / source_width if source_width else 1.0
-    scale_y = target_height / source_height if source_height else 1.0
+    scale_x = tw / source_width if source_width else 1.0
+    scale_y = th / source_height if source_height else 1.0
     
     boxes = []
     for item in layout_data[page_key]:
