@@ -16,8 +16,6 @@ class PPStructureV3WithGenetics:
         if 'text_recognition_model_name' not in kwargs:
             kwargs['text_recognition_model_name'] = 'cyrillic_PP-OCRv5_mobile_rec'
         
-        # print(f"[DEBUG] Initializing with text_recognition_model_name: {kwargs.get('text_recognition_model_name')}")
-        
         self.layout_det = PPStructureV3(**kwargs)
         self.genetic_detector = GeneticSequenceDetector(min_length=6)
     
