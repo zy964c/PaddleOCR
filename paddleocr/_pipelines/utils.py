@@ -69,6 +69,10 @@ def convert_layout_json_to_paddleocr(layout_data, page_index=0, target_width=Non
             label = "text"
         elif item_type == "BT_RasterPicture":
             label = "image"
+        elif item_type == "BT_Formula":
+            label = "display_formula"
+        elif item_type == "BT_InlineFormula":
+            label = "inline_formula"
         else:
             continue
         
