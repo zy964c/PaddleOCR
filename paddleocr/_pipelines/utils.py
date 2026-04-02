@@ -55,6 +55,10 @@ def convert_layout_json_to_paddleocr(layout_data, page_index=0, target_width=Non
     tw = target_width or 1190
     th = target_height or 1684
     
+    # Swap target dimensions for landscape pages
+    if source_width and source_height and source_width > source_height and tw < th:
+        tw, th = th, tw
+    
     # Calculate scaling factors
     scale_x = tw / source_width if source_width else 1.0
     scale_y = th / source_height if source_height else 1.0
